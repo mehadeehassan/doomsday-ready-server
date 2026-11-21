@@ -56,5 +56,6 @@ module.exports = {
   createMovie,
   findMovieByTitle,
   getAllMovies,
-  updateMovie
+  updateMovie,
+  findMoviesByIds
 };

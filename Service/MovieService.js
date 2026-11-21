@@ -1,6 +1,7 @@
 const movieRepository = require('../Repository/MovieRepository');
 const { validateMovie } = require('../Validation/MovieValidation');
 const { validateMovieUpdate } = require('../Validation/MovieValidation');
+const { hasCircularDependency } = require('../Utils/MovieHelpers');
 const { ObjectId } = require('mongodb');
 
 async function createMovie(movieData) {
@@ -10,6 +11,14 @@ async function createMovie(movieData) {
   if (validationError) {
     const error = new Error(validationError);
     error.statusCode = 400;
+    throw error;
+  }
+
+  const movies = await movieRepository.getAllMovies();
+  if (hasCircularDependency(movies, '__new_movie__', movieData.prerequisites || [])) {
+    const error = new Error('Circular dependency detected');
+    error.statusCode = 409;
+    error.code = 'CIRCULAR_DEPENDENCY';
     throw error;
   }
 
@@ -53,8 +62,16 @@ async function updateMovie(id, updateData) {
     throw error;
   }
   if (updateData.prerequisites !== undefined) {
-  await validatePrerequisites(id, updateData.prerequisites);
-}
+    await validatePrerequisites(id, updateData.prerequisites);
+
+    const movies = await movieRepository.getAllMovies();
+    if (hasCircularDependency(movies, id, updateData.prerequisites)) {
+      const error = new Error('Circular dependency detected');
+      error.statusCode = 409;
+      error.code = 'CIRCULAR_DEPENDENCY';
+      throw error;
+    }
+  }
 
   const existingMovie = await movieRepository.findMovieByTitle(updateData.title?.trim() || '');
 
@@ -85,28 +102,34 @@ async function updateMovie(id, updateData) {
   return await movieRepository.updateMovie(id, updateData);
 }
 
+function throwValidationError(message) {
+  const error = new Error(message);
+  error.statusCode = 400;
+  throw error;
+}
+
 async function validatePrerequisites(movieId, prerequisiteIds = []) {
   const uniqueIds = [...new Set(prerequisiteIds)];
 
   if (uniqueIds.length !== prerequisiteIds.length) {
-    throw new Error('Duplicate prerequisite IDs are not allowed');
+    throwValidationError('Duplicate prerequisite IDs are not allowed');
   }
 
   for (const id of uniqueIds) {
     if (!ObjectId.isValid(id)) {
-      throw new Error('Invalid prerequisite movie ID');
+      throwValidationError('Invalid prerequisite movie ID');
     }
 
     if (movieId && id === movieId) {
-      throw new Error('A movie cannot depend on itself');
+      throwValidationError('A movie cannot depend on itself');
     }
   }
 
-  const movieIds = uniqueIds.map(id => new ObjectId(id));
+  const movieIds = uniqueIds.map((id) => new ObjectId(id));
   const existingMovies = await movieRepository.findMoviesByIds(movieIds);
 
   if (existingMovies.length !== uniqueIds.length) {
-    throw new Error('One or more prerequisite movies were not found');
+    throwValidationError('One or more prerequisite movies were not found');
   }
 }
 

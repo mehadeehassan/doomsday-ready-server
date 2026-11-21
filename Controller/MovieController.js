@@ -10,9 +10,10 @@ async function createMovie(req, res) {
       data: movie
     });
   }  catch (error) {
-    res.status(error.statusCode || 500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
-      message: error.message
+      message: error.message,
+      code: error.code || null
     });
   }
 }
@@ -34,26 +35,22 @@ async function getAllMovies(req, res) {
 }
 
 
-const { ObjectId } = require('mongodb');
+async function updateMovie(req, res) {
+  try {
+    const movie = await movieService.updateMovie(req.params.id, req.body);
 
-async function updateMovie(id, updateData) {
-  if (!ObjectId.isValid(id)) {
-    const error = new Error('Invalid movie ID');
-    error.statusCode = 400;
-    throw error;
+    return res.status(200).json({
+      success: true,
+      message: 'Movie updated successfully',
+      data: movie
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message,
+      code: error.code || null
+    });
   }
-
-  const existingMovie = await movieRepository.findMovieByTitle(
-    updateData.title?.trim() || ''
-  );
-
-  if (updateData.title && existingMovie && existingMovie._id.toString() !== id) {
-    const error = new Error('Movie title already exists');
-    error.statusCode = 409;
-    throw error;
-  }
-
-  return await movieRepository.updateMovie(id, updateData);
 }
 
 
