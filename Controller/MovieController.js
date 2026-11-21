@@ -73,4 +73,4 @@ async function getMovieRewatchOrder(req, res) {
 }
 
 
-module.exports = { createMovie, getAllMovies, updateMovie };
+module.exports = { createMovie, getAllMovies, updateMovie, getMovieRewatchOrder };
