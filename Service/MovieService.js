@@ -1,7 +1,7 @@
 const movieRepository = require('../Repository/MovieRepository');
 const { validateMovie } = require('../Validation/MovieValidation');
 const { validateMovieUpdate } = require('../Validation/MovieValidation');
-const { hasCircularDependency } = require('../Utils/MovieHelpers');
+const { hasCircularDependency, getRewatchOrder } = require('../Utils/MovieHelpers');
 const { ObjectId } = require('mongodb');
 
 async function createMovie(movieData) {
@@ -133,4 +133,24 @@ async function validatePrerequisites(movieId, prerequisiteIds = []) {
   }
 }
 
-module.exports = { createMovie, getAllMovies, updateMovie };
+async function getMovieRewatchOrder(id) {
+  if (!ObjectId.isValid(id)) {
+    const error = new Error('Invalid movie ID');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const targetMovie = await movieRepository.findMovieById(id);
+
+  if (!targetMovie) {
+    const error = new Error('Movie not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const movies = await movieRepository.getAllMovies();
+
+  return getRewatchOrder(movies, id);
+}
+
+module.exports = { createMovie, getAllMovies, updateMovie, getMovieRewatchOrder };

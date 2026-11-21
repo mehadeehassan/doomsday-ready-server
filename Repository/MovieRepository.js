@@ -1,4 +1,5 @@
 const { getDB } = require('../Config/database');
+const { ObjectId } = require('mongodb');
 
 async function createMovie(movieData) {
   const database = getDB();
@@ -30,8 +31,6 @@ async function getAllMovies() {
   return await database.collection('movies').find().toArray();
 }
 
-const { ObjectId } = require('mongodb');
-
 async function updateMovie(id, updateData) {
   const database = getDB();
 
@@ -52,10 +51,19 @@ async function findMoviesByIds(movieIds) {
     .toArray();
 }
 
+async function findMovieById(id) {
+  const database = getDB();
+
+  return await database.collection('movies').findOne({
+    _id: new ObjectId(id)
+  });
+}
+
 module.exports = {
   createMovie,
   findMovieByTitle,
   getAllMovies,
   updateMovie,
-  findMoviesByIds
+  findMoviesByIds,
+  findMovieById
 };

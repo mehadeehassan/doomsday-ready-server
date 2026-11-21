@@ -53,5 +53,24 @@ async function updateMovie(req, res) {
   }
 }
 
+async function getMovieRewatchOrder(req, res) {
+  try {
+    const result = await movieService.getMovieRewatchOrder(
+      req.params.id
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message,
+      code: error.code || null
+    });
+  }
+}
+
 
 module.exports = { createMovie, getAllMovies, updateMovie };
