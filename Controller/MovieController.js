@@ -33,4 +33,28 @@ async function getAllMovies(req, res) {
   }
 }
 
-module.exports = { createMovie, getAllMovies };
+
+const { ObjectId } = require('mongodb');
+
+async function updateMovie(id, updateData) {
+  if (!ObjectId.isValid(id)) {
+    const error = new Error('Invalid movie ID');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existingMovie = await movieRepository.findMovieByTitle(
+    updateData.title?.trim() || ''
+  );
+
+  if (updateData.title && existingMovie && existingMovie._id.toString() !== id) {
+    const error = new Error('Movie title already exists');
+    error.statusCode = 409;
+    throw error;
+  }
+
+  return await movieRepository.updateMovie(id, updateData);
+}
+
+
+module.exports = { createMovie, getAllMovies, updateMovie };
