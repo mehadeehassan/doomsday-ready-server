@@ -1,24 +1,48 @@
 const { MongoClient } = require('mongodb');
 
-const client = new MongoClient(process.env.MONGODB_URI);
-
+let client;
 let database;
+let connectionPromise;
 
 async function connectDB() {
-  await client.connect();
+  if (database) {
+    return database;
+  }
 
-  database = client.db(process.env.DB_NAME);
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI is not configured');
+  }
 
-  await database
-    .collection('movies')
-    .createIndex({ title: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
+  if (!process.env.DB_NAME) {
+    throw new Error('DB_NAME is not configured');
+  }
 
-  await database.collection('cinemas').createIndex(
-    { name: 1 },
-    { unique: true, collation: { locale: 'en', strength: 2 } }
-  );
+  if (!connectionPromise) {
+    connectionPromise = (async () => {
+      client = client || new MongoClient(process.env.MONGODB_URI);
+      await client.connect();
 
-  console.log('MongoDB connected successfully');
+      const connectedDatabase = client.db(process.env.DB_NAME);
+
+      await connectedDatabase
+        .collection('movies')
+        .createIndex({ title: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
+
+      await connectedDatabase.collection('cinemas').createIndex(
+        { name: 1 },
+        { unique: true, collation: { locale: 'en', strength: 2 } }
+      );
+
+      database = connectedDatabase;
+      console.log('MongoDB connected successfully');
+      return database;
+    })().catch((error) => {
+      connectionPromise = null;
+      throw error;
+    });
+  }
+
+  return connectionPromise;
 }
 
 function getDB() {
