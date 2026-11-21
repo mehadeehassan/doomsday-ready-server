@@ -13,6 +13,11 @@ async function connectDB() {
     .collection('movies')
     .createIndex({ title: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
+  await database.collection('cinemas').createIndex(
+    { name: 1 },
+    { unique: true, collation: { locale: 'en', strength: 2 } }
+  );
+
   console.log('MongoDB connected successfully');
 }
 
