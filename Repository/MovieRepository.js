@@ -7,8 +7,25 @@ async function createMovie(movieData) {
 
   return {
     _id: result.insertedId,
-    ...movieData
+    ...movieData,
   };
 }
 
-module.exports = { createMovie };
+async function findMovieByTitle(title) {
+  const database = getDB();
+
+  return await database.collection('movies').findOne(
+    { title },
+    {
+      collation: {
+        locale: 'en',
+        strength: 2,
+      },
+    },
+  );
+}
+
+module.exports = {
+  createMovie,
+  findMovieByTitle,
+};
