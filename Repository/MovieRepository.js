@@ -44,6 +44,14 @@ async function updateMovie(id, updateData) {
   return result;
 }
 
+async function findMoviesByIds(movieIds) {
+  const database = getDB();
+
+  return await database.collection('movies')
+    .find({ _id: { $in: movieIds } })
+    .toArray();
+}
+
 module.exports = {
   createMovie,
   findMovieByTitle,
