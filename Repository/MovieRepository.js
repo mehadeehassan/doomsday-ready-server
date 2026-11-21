@@ -24,8 +24,14 @@ async function findMovieByTitle(title) {
     },
   );
 }
+async function getAllMovies() {
+  const database = getDB();
+
+  return await database.collection('movies').find().toArray();
+}
 
 module.exports = {
   createMovie,
   findMovieByTitle,
+  getAllMovies,
 };

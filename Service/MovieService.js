@@ -39,4 +39,8 @@ async function createMovie(movieData) {
   }
 }
 
-module.exports = { createMovie };
+async function getAllMovies() {
+  return await movieRepository.getAllMovies();
+}
+
+module.exports = { createMovie, getAllMovies };
